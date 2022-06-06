@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="spacing_min">10dp</dimen>
+    <dimen name="spacing_0_5x">15dp</dimen>
+    <dimen name="spacing_3x">30dp</dimen>
+    <dimen name="spacing_4_5x">45dp</dimen>
+    <dimen name="padding_min">5dp</dimen>
+    <dimen name="padding_3x">15dp</dimen>
+    <dimen name="btn_max">100dp</dimen>
+    <dimen name="icon_min">24dp</dimen>
+    <dimen name="icon_2x">48dp</dimen>
+    <dimen name="image_height">250dp</dimen>
+    <dimen name="image_height_large">350dp</dimen>
+    <dimen name="title_text">20sp</dimen>
+    <dimen name="text_body">16sp</dimen>
+    <dimen name="text_h1">35sp</dimen>
+    <dimen name="thickness_min">1.5dp</dimen>
+    <dimen name="borderstroke_min">1.5dp</dimen>
+    <dimen name="footer_length">40dp</dimen>
+</resources>

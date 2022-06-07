@@ -13,3 +13,6 @@ Limitations:
 WIP items:
 - Coins: totalling amount of coins is yet to be implemented
 - Allowing a user to select an existing photo to analyse
+
+Improvements:
+- Coroutines/multi thread processing

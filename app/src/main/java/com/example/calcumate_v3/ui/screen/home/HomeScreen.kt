@@ -1,11 +1,17 @@
 package com.example.calcumate_v3.ui.screen.home
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -13,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
@@ -89,12 +96,14 @@ private fun HomeScreenContent(viewModel: HomeViewModel, navController: NavContro
                 )
             }
             item{
-                CreateText( //header
-                    "Get Started",
-                    MaterialTheme.typography.body1,
-                    dimensionResource(R.dimen.spacing_3x),
-                    dimensionResource(R.dimen.spacing_min)
-                )
+                Box(modifier = Modifier.clickable { viewModel.toggleBoolean(viewState.showGetStartedMenu) }){
+                    CreateText( //header
+                        "Get Started",
+                        MaterialTheme.typography.body2,
+                        dimensionResource(R.dimen.spacing_3x),
+                        dimensionResource(R.dimen.spacing_min)
+                    )
+                }
             }
             item{
                 CreateDivider(
@@ -105,6 +114,11 @@ private fun HomeScreenContent(viewModel: HomeViewModel, navController: NavContro
                 )
             }
         }
+
+        if(viewState.showGetStartedMenu.value){
+            //Do x
+        }
+        Log.d("!!!showGetStartedMenu", "${viewState.showGetStartedMenu.value}")
     }
 
 }
@@ -112,7 +126,9 @@ private fun HomeScreenContent(viewModel: HomeViewModel, navController: NavContro
 @Composable
 fun CreateText(contentLabel: String, textStyle: TextStyle, topSpacerHeight: Dp, bottomSpacerHeight: Dp){
     Spacer(Modifier.height(topSpacerHeight))
+
     Text(
+//        modifier = Modifier.toggleable(value = viewState.showGetStartedMenu.value, onValueChange = {viewState.showGetStartedMenu.value = it}),
         text = contentLabel,
         style = textStyle, //replace with theme?
         textAlign = TextAlign.Center,

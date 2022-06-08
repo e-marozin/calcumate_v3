@@ -5,6 +5,7 @@
     <dimen name="spacing_3x">30dp</dimen>
     <dimen name="spacing_4_5x">45dp</dimen>
     <dimen name="padding_min">5dp</dimen>
+    <dimen name="padding_2x">1dp</dimen>
     <dimen name="padding_3x">15dp</dimen>
     <dimen name="btn_max">100dp</dimen>
     <dimen name="icon_min">24dp</dimen>

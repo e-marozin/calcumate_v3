@@ -6,6 +6,8 @@ import androidx.compose.material.BottomSheetScaffoldState
 import androidx.compose.material.BottomSheetState
 import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import com.example.calcumate_v3.R
@@ -14,7 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 //Business logic of HomeScreen lives here - state hoisting, make composables stateless (value: Type, onValueChange: (Type) -> Unit)
 data class HomeViewState (
-    val showGetStartedMenu: Boolean = false,
+    val showGetStartedMenu: MutableState<Boolean> = mutableStateOf(false),
     // Declaring a Boolean value to store bottom sheet collapsed state
 )
 
@@ -25,6 +27,12 @@ class HomeViewModel : ViewModel (){
     init{
         //Set values in view state
 //        _viewState.value = _viewState.value.copy()
+    }
+
+    //Is there an OOTB fun for this?
+    //should it just directly toggle viewstate value rather than param ??
+    fun toggleBoolean(bool: MutableState<Boolean>){
+        bool.value = !bool.value
     }
 
 }

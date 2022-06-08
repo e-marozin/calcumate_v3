@@ -45,6 +45,10 @@ android {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
+//    aaptOptions {
+//        noCompress "tflite"
+//        // or noCompress "lite"
+//    }
 }
 
 dependencies {
@@ -67,6 +71,11 @@ dependencies {
 
     //ML Kit Text Recognition
     implementation 'com.google.android.gms:play-services-mlkit-text-recognition:18.0.0'
+    //ML Kit Object Recognition
+//    implementation 'com.google.mlkit:object-detection:17.0.0'
+    implementation 'com.google.mlkit:object-detection-custom:17.0.0'
+    //ML Kit Image Labeling
+    implementation 'com.google.mlkit:image-labeling:17.0.7'
 
     //CameraX: Youtube Video https://www.youtube.com/watch?v=3QzgzL0oJQc
     // CameraX core library using camera2 implementation

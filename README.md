@@ -9,10 +9,13 @@ Uses Google's ML Kit (text recognition, object detection) to identify currency w
 
 Limitations:
 - Currently only supports AU currency
+- Custom models available can only detect 'Coins' no additional data on what currency value the coin is (i.e: 50 cents, 1 dollar...), requires additional input from user on # of coins they have for each coin type
 
 WIP items:
-- Coins: totalling amount of coins is yet to be implemented
 - Allowing a user to select an existing photo to analyse
+- UI cleanup
+- Input validation on coins -> numeric only
+- Bug fixes (theme, modal displays)
 
 Improvements:
 - Coroutines/multi thread processing

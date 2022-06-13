@@ -5,7 +5,7 @@
     <dimen name="spacing_3x">30dp</dimen>
     <dimen name="spacing_4_5x">45dp</dimen>
     <dimen name="padding_min">5dp</dimen>
-    <dimen name="padding_2x">1dp</dimen>
+    <dimen name="padding_2x">10dp</dimen>
     <dimen name="padding_3x">15dp</dimen>
     <dimen name="btn_max">100dp</dimen>
     <dimen name="icon_min">24dp</dimen>
@@ -18,4 +18,6 @@
     <dimen name="thickness_min">1.5dp</dimen>
     <dimen name="borderstroke_min">1.5dp</dimen>
     <dimen name="footer_length">40dp</dimen>
+    <dimen name="textfield_width">80dp</dimen>
+    <dimen name="textfield_height">40dp</dimen>
 </resources>

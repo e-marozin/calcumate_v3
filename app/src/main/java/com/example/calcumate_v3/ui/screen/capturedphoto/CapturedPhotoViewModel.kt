@@ -1,49 +1,37 @@
 package com.example.calcumate_v3.ui.screen.capturedphoto
 
 import android.content.Context
-import android.graphics.Rect
 import android.net.Uri
 import android.util.Log
-import androidx.compose.material.*
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.lifecycle.LifecycleOwner
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import com.example.calcumate_v3.CurrencyValues
-import com.example.calcumate_v3.currencyValues
 import com.example.calcumate_v3.getCurrencyValuesByRegionCode
-import com.example.calcumate_v3.ui.screen.home.HomeViewState
 import com.google.mlkit.common.model.LocalModel
 import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.label.ImageLabeling
-import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions
-//import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
-//import com.google.mlkit.vision.objects.defaults.PredefinedCategory
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.io.IOException
-import java.lang.reflect.Type
-import java.util.Collections.addAll
 
 data class CapturedPhotoViewState(
     val context: Context? = null, //Bad to re-init? Do we need to pass from IAViewModel?
     val photoUri: Uri? = null,
     val image: InputImage? = null, //need to declare at this level or fun enough?
     val currencyValues: CurrencyValues? = null,
-    val total: Int? = 0,
-    val coinTotal: Double? = 0.00,
+    var total: Double? = 0.00,
     val debugMode: MutableState<Boolean> = mutableStateOf(false),
     val debugLog: MutableState<String> = mutableStateOf(""),
     val displayX: MutableState<Boolean> = mutableStateOf(false),
     val displayCoinInput: MutableState<Boolean> = mutableStateOf(false),
-    val valueStateList: MutableState<String> = mutableStateOf("")
+    val valueStateList: SnapshotStateList<String> = mutableStateListOf(),
+    val mapTest: MutableMap<Int, Double> = mutableMapOf()
 )
 
 class CapturedPhotoViewModel : ViewModel(){
@@ -54,14 +42,24 @@ class CapturedPhotoViewModel : ViewModel(){
         _viewState.value = _viewState.value.copy(
             context = context,
             photoUri = photoUri,
-            currencyValues = getCurrencyValuesByRegionCode("AU"), //!!UPLIFT: retrieve currency values via dynamic region code/user input
-
+            currencyValues = getCurrencyValuesByRegionCode("AU") //!!UPLIFT: retrieve currency values via dynamic region code/user input
         )
-        Log.d("!!!currencyValues", "${_viewState.value.currencyValues}")
-
     }
 
-    fun textRecognition() {
+    fun detectCurrencyTotal(){
+        //Process notes
+        textRecognition()
+
+        //Check for coins
+        objectRecognition()
+
+        //If there are no coins, just show final screen
+        if(!_viewState.value.displayCoinInput.value){
+            _viewState.value = _viewState.value.copy(displayX = mutableStateOf(true))
+        }
+    }
+
+    private fun textRecognition() {
         //Create instance of recognizer
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
@@ -76,9 +74,8 @@ class CapturedPhotoViewModel : ViewModel(){
         val result = recognizer.process(_viewState.value.image!!)
             .addOnSuccessListener { visionText ->
                 // Task completed successfully
-                Log.d("Text Recognition", "success")
                 val resultText = visionText.text
-                //Popualte debugLog
+                //Populate debugLog
                 _viewState.value = _viewState.value.copy(debugLog = (mutableStateOf(resultText)))
                 for (block in visionText.textBlocks) {
                     val blockText = block.text
@@ -103,53 +100,22 @@ class CapturedPhotoViewModel : ViewModel(){
                         }
                     }
                 }
-                Log.d("!!!total", "${_viewState.value.total}")
+                Log.d("!!!TextRecogTotal", "${_viewState.value.total}")
             }
             .addOnFailureListener { e ->
                 // Task failed with an exception
                 Log.d("Text Recognition", "failure")
 
             }
-
         //UPLIFT: Wait for total to be updated...??
-        _viewState.value = _viewState.value.copy(displayX = mutableStateOf(true))
     }
 
-    fun imageLabeling() {
-        //Create instance of image labeling
-        val labeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
-
-        //Create InputImage from Uri
-        try {
-            createInputImageFromURI()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        }
-
-        //Process Image
-        labeler.process(_viewState.value.image!!) //UPLIFT: don't recall, check if Image null, if not use existing InputImage
-            .addOnSuccessListener { labels ->
-                // Task completed successfully
-                Log.d("!!!imageLabelling", "success")
-                for (label in labels) {
-                    val text = label.text
-                    val confidence = label.confidence
-                    val index = label.index
-                }
-
-            }
-            .addOnFailureListener { e ->
-                // Task failed with an exception
-                Log.d("!!!imageLabelling", "failure")
-            }
-    }
-
-    fun objectRecognition(){
+    private fun objectRecognition(){
+        //Setup custom model to detect coins
         val localModel = LocalModel.Builder()
             .setAssetFilePath("lite-model_object_detection_mobile_object_labeler_v1_1.tflite")
             .build()
 
-        //CUSTOM MODEL
         // Multiple object detection in static images
         val customObjectDetectorOptions =
             CustomObjectDetectorOptions.Builder(localModel)
@@ -174,20 +140,18 @@ class CapturedPhotoViewModel : ViewModel(){
         objectDetector.process(_viewState.value.image!!)
             .addOnSuccessListener { detectedObjects ->
                 // Task completed successfully
-                Log.d("Object Recognition", "success, $detectedObjects")
                 for (detectedObject in detectedObjects) {
-                    val boundingBox = detectedObject.boundingBox
-                    val trackingId = detectedObject.trackingId
-//                    viewState.value.boundingBoxes.add(boundingBox) //??? correct way to add to list, no .copy()?
+                    Log.d("!!!Object Recognition", "success, $detectedObject")
+//                    val boundingBox = detectedObject.boundingBox
+//                    val trackingId = detectedObject.trackingId
                     for (label in detectedObject.labels) {
                         val text = label.text
+                        Log.d("!!!Object Recognition", "label, $text")
                         val confidence = label.confidence
                         if(text == "Coin" && _viewState.value.displayCoinInput != mutableStateOf(true)){
                             _viewState.value = _viewState.value.copy(displayCoinInput = mutableStateOf(true))
                         }
-                        Log.d("!!!text", "${text}}")
                     }
-//                    Log.d("!!!boundingBoxes", "${_viewState.value.boundingBoxes}}")
                 }
             }
             .addOnFailureListener { e ->
@@ -196,11 +160,7 @@ class CapturedPhotoViewModel : ViewModel(){
             }
     }
 
-    fun isNumeric(toCheck: String): Boolean {
-        return toCheck.all { char -> char.isDigit() }
-    }
-
-    fun createInputImageFromURI(){
+    private fun createInputImageFromURI(){
         _viewState.value = _viewState.value.copy(
             image = InputImage.fromFilePath(
                 _viewState.value.context!!,
@@ -209,8 +169,37 @@ class CapturedPhotoViewModel : ViewModel(){
         )
     }
 
-    fun setList(list: List<String>){
-        val textFieldInitValues = List(list.size){ "" }
+    private fun isNumeric(toCheck: String): Boolean {
+        return toCheck.all { char -> char.isDigit() }
+    }
 
+    fun setList(list: List<Double>){
+        val textFieldInitValues = List(list.size){ "" }
+        _viewState.value.valueStateList.apply { addAll(textFieldInitValues) }
+    }
+
+    //!!!UPLIFT: handle, removal of items from map if user updates
+    fun onTextChange(text: String, index: Int, coinValue: Double){
+        _viewState.value.valueStateList[index] = text
+        if(isNumeric(text)) {
+            _viewState.value.mapTest[text.toInt()] = coinValue
+        }else{
+            Log.d("!!!CoinInpt", "NOT NUMERIC, ERROR")
+        }
+    }
+
+    fun onEnter(){
+        if(viewState.value.mapTest.isNotEmpty()){
+            var currentTotal: Double = 0.00
+            _viewState.value.mapTest.forEach { item ->
+                Log.d("!!item", "$item")
+                currentTotal += (item.key * item.value)
+                Log.d("!!currentTotal", "$currentTotal")
+            }
+            _viewState.value = _viewState.value.copy(total = _viewState.value.total?.plus(currentTotal), displayCoinInput = mutableStateOf(false), displayX = mutableStateOf(true))
+            Log.d("!!total", "${_viewState.value.total}")
+        }else{
+            Log.d("!!!CoinInput", "NO ENTRIES, ERROR")
+        }
     }
 }

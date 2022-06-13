@@ -16,3 +16,4 @@ WIP items:
 
 Improvements:
 - Coroutines/multi thread processing
+- Themes

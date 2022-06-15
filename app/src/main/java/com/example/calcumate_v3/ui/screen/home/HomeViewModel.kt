@@ -1,5 +1,6 @@
 package com.example.calcumate_v3.ui.screen.home
 
+import android.net.Uri
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -9,7 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 //Business logic of HomeScreen lives here - state hoisting, make composables stateless (value: Type, onValueChange: (Type) -> Unit)
 data class HomeViewState (
     val showGetStartedMenu: MutableState<Boolean> = mutableStateOf(false),
-    // Declaring a Boolean value to store bottom sheet collapsed state
+    val imageUri: MutableState<Uri>? = null
 )
 
 class HomeViewModel : ViewModel (){
@@ -18,13 +19,15 @@ class HomeViewModel : ViewModel (){
 
     init{
         //Set values in view state
-//        _viewState.value = _viewState.value.copy()
     }
 
-    //Is there an OOTB fun for this?
-    //should it just directly toggle viewstate value rather than param ??
+    //!!!UPLIFT: is there an OOTB version of this?
     fun toggleBoolean(bool: MutableState<Boolean>){
         bool.value = !bool.value
     }
 
+    //!!!UPLIFT: cannot set value directly in Screen, hitting issues with nullable
+    fun setImageUri(uri: Uri){
+        _viewState.value = _viewState.value.copy(imageUri = mutableStateOf(uri))
+    }
 }

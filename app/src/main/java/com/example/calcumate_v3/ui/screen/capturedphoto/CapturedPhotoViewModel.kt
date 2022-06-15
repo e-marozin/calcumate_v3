@@ -47,15 +47,16 @@ class CapturedPhotoViewModel : ViewModel(){
     }
 
     fun detectCurrencyTotal(){
-        //Process notes
-        textRecognition()
-
         //Check for coins
         objectRecognition()
 
+        //Process notes
+        textRecognition()
+
         //If there are no coins, just show final screen
         if(!_viewState.value.displayCoinInput.value){
-            _viewState.value = _viewState.value.copy(displayX = mutableStateOf(true))
+//            _viewState.value = _viewState.value.copy(displayX = mutableStateOf(true))
+            toggleBoolean(_viewState.value.displayX)
         }
     }
 
@@ -178,7 +179,7 @@ class CapturedPhotoViewModel : ViewModel(){
         _viewState.value.valueStateList.apply { addAll(textFieldInitValues) }
     }
 
-    //!!!UPLIFT: handle, removal of items from map if user updates
+    //!!!UPLIFT: validate input, handle: removal of items from map if user updates
     fun onTextChange(text: String, index: Int, coinValue: Double){
         _viewState.value.valueStateList[index] = text
         if(isNumeric(text)) {
@@ -196,10 +197,17 @@ class CapturedPhotoViewModel : ViewModel(){
                 currentTotal += (item.key * item.value)
                 Log.d("!!currentTotal", "$currentTotal")
             }
-            _viewState.value = _viewState.value.copy(total = _viewState.value.total?.plus(currentTotal), displayCoinInput = mutableStateOf(false), displayX = mutableStateOf(true))
+            _viewState.value = _viewState.value.copy(total = _viewState.value.total?.plus(currentTotal), displayCoinInput = mutableStateOf(false)) //displayx = true
+            toggleBoolean(_viewState.value.displayX)
+            Log.d("!!displayX", "${_viewState.value.displayX}")
             Log.d("!!total", "${_viewState.value.total}")
         }else{
             Log.d("!!!CoinInput", "NO ENTRIES, ERROR")
         }
+    }
+
+    //!!!UPLIFT: Move to app utils? re-init in HomeScreenViewModel
+    fun toggleBoolean(bool: MutableState<Boolean>){
+        bool.value = !bool.value
     }
 }

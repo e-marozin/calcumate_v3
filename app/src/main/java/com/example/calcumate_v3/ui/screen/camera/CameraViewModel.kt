@@ -1,4 +1,4 @@
-package com.example.calcumate_v3.ui.screen.imageanalyzer
+package com.example.calcumate_v3.ui.screen.camera
 
 import android.content.ContentValues
 import android.content.Context
@@ -28,22 +28,20 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executor
 
-//Business logic of ImageAnlyzerScreen lives here - state hoisting, make composables stateless (value: Type, onValueChange: (Type) -> Unit)
-
-data class ImageAnalyzerViewState( //?? What's actually needed here, only things that'll be re-used?
+//Business logic of CameraScreen lives here - state hoisting, make composables stateless (value: Type, onValueChange: (Type) -> Unit)
+data class CameraViewState( //!!!UPLIFT: clean up data class if needed
     val context: Context? = null,
     val lifeCycleOwner: LifecycleOwner? = null,
     val imageCapture: MutableState<ImageCapture?> = mutableStateOf(null),
     val executor: MutableState<Executor?> = mutableStateOf(null),
     val cameraProviderFuture: ListenableFuture<ProcessCameraProvider>? = null,
     val previewView: PreviewView? = null,
-//    var extractedText: MutableState<String> = mutableStateOf(""),
     var photoUri: Uri? = null
 )
 
-class ImageAnalyzerViewModel : ViewModel(){
-    private val _viewState = MutableStateFlow(ImageAnalyzerViewState())
-    val viewState: StateFlow<ImageAnalyzerViewState> = _viewState
+class CameraViewModel : ViewModel(){
+    private val _viewState = MutableStateFlow(CameraViewState())
+    val viewState: StateFlow<CameraViewState> = _viewState
 
 
     fun initCamera(context: Context, lifeCycleOwner: LifecycleOwner){
@@ -71,7 +69,6 @@ class ImageAnalyzerViewModel : ViewModel(){
 
             try {
                 cameraProvider.unbindAll()
-
                 //Image Analyzer
                     ///CODE HERE
 
@@ -97,8 +94,8 @@ class ImageAnalyzerViewModel : ViewModel(){
         return previewView
     }
 
+    //Take/store photo and redirect to CapturedPhotoScreen, passing the image URI
     fun takePhoto(navController: NavController){
-//        var photoUri: Uri? = null
         //MEDIA STORE VARIABLES
         val FILENAME = "yyyy-MM-dd-HH-mm-ss-SSS"
         // Create time stamped name and MediaStore entry.
@@ -129,15 +126,13 @@ class ImageAnalyzerViewModel : ViewModel(){
                     Log.e("FAILURE", "Photo capture failed: ${exc.message}", exc)
                 }
 
-                override fun
-                        onImageSaved(output: ImageCapture.OutputFileResults){
+                override fun onImageSaved(output: ImageCapture.OutputFileResults){
                     val msg = "Photo capture succeeded: ${output.savedUri}"
-                    Log.d("SUCCESS", msg)
-                    //Nav to view photo
+//                    Log.d("SUCCESS", msg)
                     _viewState.value = _viewState.value.copy(photoUri = output.savedUri!!)
-                    Log.d("photoUriAsString", "${_viewState.value.photoUri.toString()}")
-                    Log.d("urlEncoder", URLEncoder.encode("/${_viewState.value.photoUri.toString()}", StandardCharsets.UTF_8.toString()))
-                    val encodedUrl = URLEncoder.encode("${_viewState.value.photoUri.toString()}", StandardCharsets.UTF_8.toString())
+//                    Log.d("urlEncoder", URLEncoder.encode("/${_viewState.value.photoUri.toString()}", StandardCharsets.UTF_8.toString()))
+                    val encodedUrl = URLEncoder.encode(_viewState.value.photoUri.toString(), StandardCharsets.UTF_8.toString())
+//                    Log.d("!!!encodedUrl", "$encodedUrl")
                     navController.navigate(Screens.CapturedPhotoScreen.route + "/$encodedUrl")
                 }
             })

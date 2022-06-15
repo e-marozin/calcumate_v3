@@ -1,22 +1,22 @@
 package com.example.calcumate_v3.ui.screen.home
 
-import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -24,7 +24,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.calcumate_v3.R
 import com.example.calcumate_v3.ui.base.CreateDivider
-import com.example.calcumate_v3.ui.base.CreateIcon
 import com.example.calcumate_v3.ui.navigation.Screens
 
 //HomeScreen composables/ui lives here
@@ -38,13 +37,19 @@ fun HomeScreen(navController: NavController) {
 private fun HomeScreenContent(viewModel: HomeViewModel, navController: NavController){
     val viewState by viewModel.viewState.collectAsState()
 
+    //!!!UPLIFT: move to ViewModel?
+    //Init launcher for loading gallery
+    val launcher  = rememberLauncherForActivityResult(contract =
+    ActivityResultContracts.GetContent()) { uri ->
+        uri?.let { viewModel.setImageUri(it) } //!!!UPLIFT: set directly without method???
+    }
+
     Box (
         Modifier
             .background(colorResource(R.color.pink_0))
             .fillMaxSize(),
         contentAlignment = Alignment.Center
     ){
-
         LazyColumn(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -64,27 +69,27 @@ private fun HomeScreenContent(viewModel: HomeViewModel, navController: NavContro
                     dimensionResource(R.dimen.icon_2x),
                     0.95f,
                     dimensionResource(R.dimen.spacing_min),
-                    navController
+                    onClick = {navController.navigate(Screens.CameraScreen.route)}
                 )
             }
             item{
                 CreateButton(
-                    "Camera",
+                    "Gallery",
                     R.drawable.ic_baseline_insert_photo_24,
                     dimensionResource(R.dimen.icon_2x),
                     0.95f,
                     dimensionResource(R.dimen.spacing_min),
-                    navController
+                    onClick = { launcher.launch("image/*") }
                 )
             }
             item{
                 CreateButton(
-                    "Camera",
+                    "Settings",
                     R.drawable.ic_baseline_settings_24,
                     dimensionResource(R.dimen.icon_2x),
                     0.95f,
                     dimensionResource(R.dimen.spacing_min),
-                    navController
+                    onClick = {navController.navigate(Screens.SettingsScreen.route)}
                 )
             }
             item{
@@ -107,10 +112,17 @@ private fun HomeScreenContent(viewModel: HomeViewModel, navController: NavContro
             }
         }
 
-        if(viewState.showGetStartedMenu.value){
-            //Do x
+        //TO-DO: Redirect to ImageAnalyzerScreen after image selection
+        //!!!BUG: URI ACCESS LIMITED, CANNOT REDIRECT WITH ENCODEDURL WITH EXTENDING ACCESS TO URI
+        viewState.imageUri?.let{
+//            GlideImage(viewState.imageUri!!.value)
+//            Log.d("!!!imageUriHOME", "${viewState.imageUri!!.value}")
+//            val encodedUrl = URLEncoder.encode(viewState.imageUri!!.value.toString(), StandardCharsets.UTF_8.toString())
+//            Log.d("!!!encodedUrlHOME", encodedUrl)
+//            navController.navigate(Screens.ImageAnalyzerScreen.route + "/${viewState.imageUri!!.value}")
+
+//            navController.navigate(Screens.ImageAnalyzerScreen.route + "/$encodedUrl")
         }
-        Log.d("!!!showGetStartedMenu", "${viewState.showGetStartedMenu.value}")
     }
 
 }
@@ -118,23 +130,20 @@ private fun HomeScreenContent(viewModel: HomeViewModel, navController: NavContro
 @Composable
 fun CreateText(contentLabel: String, textStyle: TextStyle, topSpacerHeight: Dp, bottomSpacerHeight: Dp){
     Spacer(Modifier.height(topSpacerHeight))
-
     Text(
-//        modifier = Modifier.toggleable(value = viewState.showGetStartedMenu.value, onValueChange = {viewState.showGetStartedMenu.value = it}),
         text = contentLabel,
-        style = textStyle, //replace with theme?
+        style = textStyle, //!!!UPLIFT: Replace with theme
         textAlign = TextAlign.Center,
-        color = colorResource(R.color.pink_3) //replace with theme?
+        color = colorResource(R.color.pink_3) //!!!UPLIFT: Replace with theme
     )
     Spacer(Modifier.height(bottomSpacerHeight))
 }
 
-//MOVE TO APPUTILS?
 @Composable
-fun CreateButton(contentDesc: String, iconImage: Int, iconDimen: Dp, iconAlpha: Float, spacerHeight: Dp, navController: NavController){
+fun CreateButton(contentDesc: String, iconImage: Int, iconDimen: Dp, iconAlpha: Float, spacerHeight: Dp, onClick: () -> Unit = {}){
     Spacer(Modifier.height(spacerHeight))
     Button(
-        onClick = {navController.navigate(Screens.ImageAnalyzerScreen.route)},
+        onClick = onClick,
         colors = ButtonDefaults.buttonColors(
             backgroundColor = colorResource(R.color.white),
             contentColor = colorResource(R.color.pink_3)
@@ -145,14 +154,14 @@ fun CreateButton(contentDesc: String, iconImage: Int, iconDimen: Dp, iconAlpha: 
         shape = CircleShape
     ) {
         Box(contentAlignment = Alignment.Center) {
-            CreateIcon(
-                contentDesc,
-                iconImage,
-                iconDimen,
-                iconAlpha
+            Icon(
+                painter = painterResource(iconImage),
+                contentDescription = contentDesc,
+                modifier = Modifier
+                    .alpha(iconAlpha)
+                    .size(iconDimen)
             )
         }
-
     }
     Spacer(Modifier.height(spacerHeight))
 }

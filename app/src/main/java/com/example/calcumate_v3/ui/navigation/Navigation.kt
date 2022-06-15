@@ -6,17 +6,17 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.calcumate_v3.ui.screen.camera.CameraScreen
 import com.example.calcumate_v3.ui.screen.capturedphoto.CapturedPhotoScreen
 import com.example.calcumate_v3.ui.screen.home.HomeScreen
-import com.example.calcumate_v3.ui.screen.imageanalyzer.ImageAnalyzerScreen
-import java.net.URLDecoder
+import com.example.calcumate_v3.ui.screen.settings.SettingsScreen
 
 //NavHost lives here
-
 sealed class Screens(val route: String) {
     object HomeScreen : Screens("home")
-    object ImageAnalyzerScreen : Screens("imageanalyzer")
+    object CameraScreen : Screens("camera")
     object CapturedPhotoScreen : Screens("capturedphoto")
+    object SettingsScreen : Screens("settings")
 }
 
 @Composable
@@ -28,8 +28,11 @@ fun Navigation(navController: NavHostController){
         composable(route = Screens.HomeScreen.route){
             HomeScreen(navController)
         }
-        composable(route = Screens.ImageAnalyzerScreen.route) {
-            ImageAnalyzerScreen(navController)
+        composable(route = Screens.CameraScreen.route) {
+            CameraScreen(navController)
+        }
+        composable(route = Screens.SettingsScreen.route) {
+            SettingsScreen(navController)
         }
         composable(
             route = Screens.CapturedPhotoScreen.route + "/{photoUriAsString}",

@@ -4,12 +4,13 @@ import android.net.Uri
 import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -18,7 +19,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
@@ -47,15 +47,11 @@ fun CapturedPhotoScreen(navController: NavController, photoUriAsString: String?)
 @Composable
 private fun CapturedPhotoScreenContent(viewModel: CapturedPhotoViewModel, navController: NavController, photoUri: Uri) {
     val viewState by viewModel.viewState.collectAsState()
-    val configuration = LocalConfiguration.current
-
-    val screenHeight = configuration.screenHeightDp.dp
-    val screenWidth = configuration.screenWidthDp.dp
 
     //Modifiers
     val btnModifier = Modifier
-        .clip(CircleShape)
-    //THEME????
+        .size(dimensionResource(id = R.dimen.button_size_min))
+    //!!!UPLIFT: Replace with theme
     val btnColors =  ButtonDefaults.outlinedButtonColors(
         backgroundColor = colorResource(R.color.white),
         contentColor = colorResource(R.color.pink_3)
@@ -65,7 +61,6 @@ private fun CapturedPhotoScreenContent(viewModel: CapturedPhotoViewModel, navCon
 
     //Display captured photo
     Box(modifier = Modifier.fillMaxSize()){
-        //Captured photo
         GlideImage(
             imageModel = photoUri,
             contentScale = ContentScale.FillWidth
@@ -84,14 +79,15 @@ private fun CapturedPhotoScreenContent(viewModel: CapturedPhotoViewModel, navCon
         }
         //!---DEBUG MODE ---!
 
-        //Buttons
+        //Display close or check buttons, close: returns to camera, check: processes/analyses image
         Row(modifier = Modifier
             .padding(dimensionResource(R.dimen.padding_3x))
             .fillMaxWidth()
             .align(Alignment.BottomCenter),
             horizontalArrangement = Arrangement.SpaceBetween
-        ){ //?? TO DO: Make buttons circular, clickable box instead??
-            OutlinedButton( //Close image button
+        ){
+            OutlinedButton( //Close image, return to camera
+                modifier= btnModifier,
                 border= btnBorderStroke,
                 shape = CircleShape,
                 colors = btnColors,
@@ -99,24 +95,23 @@ private fun CapturedPhotoScreenContent(viewModel: CapturedPhotoViewModel, navCon
                 onClick = {navController.popBackStack()}) { //go back
                 Icon(imageVector = ImageVector.vectorResource(R.drawable.ic_baseline_close_24) ,contentDescription = "Close image")
             }
-            OutlinedButton( //Process image button
+            OutlinedButton( //Process image, analyse image for notes/coins
+                modifier= btnModifier,
                 border= btnBorderStroke,
                 shape = CircleShape,
                 colors = btnColors,
                 contentPadding = PaddingValues(0.dp),
-//                onClick = {viewModel.textRecognition()}) {
-                onClick = {viewModel.detectCurrencyTotal()}) {
+                onClick = {viewModel.detectCurrencyTotal()}) { //process image
             Icon(imageVector = ImageVector.vectorResource(R.drawable.ic_baseline_check_24) ,contentDescription = "Process image")
             }
         }
 
-        //Display X - slide x in
+        //MODALS
         Box(
             modifier = Modifier
-                .align(Alignment.Center),
-//                .height(screenHeight/2)
-//                .width(screenWidth/2),
-            contentAlignment = Alignment.Center
+                .align(Alignment.Center)
+                .height(IntrinsicSize.Min),
+//            contentAlignment = Alignment.Center
         ){
             //Remove repetition??, simplify???
             if(viewState.displayCoinInput.value){
@@ -125,7 +120,6 @@ private fun CapturedPhotoScreenContent(viewModel: CapturedPhotoViewModel, navCon
                 Toast(viewState, viewModel, viewState.displayX.value)
             }
         }
-
     }
 }
 
@@ -147,44 +141,27 @@ private fun Toast(viewState: CapturedPhotoViewState, viewModel: CapturedPhotoVie
         exit = slideOutVertically() + shrinkVertically() + fadeOut() + scaleOut(targetScale = 1.2f)
     ) {
         // Content that needs to appear/disappear goes here:
-//        ToastContent(viewState, viewModel)
         if(viewState.displayCoinInput.value){
             CoinContent(viewState, viewModel)
         }else{
-            XContent(viewState)
+            XContent(viewState, viewModel)
         }
 
     }
 }
 
 @Composable
-private fun ToastContent(viewState: CapturedPhotoViewState) {
-
-}
-
-@Composable
-private fun XContent(viewState: CapturedPhotoViewState) {
+private fun XContent(viewState: CapturedPhotoViewState, viewModel: CapturedPhotoViewModel) {
     val shape = RoundedCornerShape(4.dp)
     Box(
         modifier = Modifier
             .clip(shape)
             .background(colorResource(id = R.color.white))
-            .border(1.dp, colorResource(id = R.color.pink_3), shape)
             .height(40.dp)
             .padding(horizontal = 8.dp),
         contentAlignment = Alignment.Center
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if(viewState.total != 0.00){ //or null?
-                Icon(imageVector = ImageVector.vectorResource(R.drawable.ic_baseline_sentiment_very_satisfied_24) ,contentDescription = "Total")
-                Text(text = "Total: ${viewState.total}")
-            }else{
-                Icon(imageVector = ImageVector.vectorResource(R.drawable.ic_outline_sentiment_dissatisfied_24) ,contentDescription = "Total")
-                Text(text = "Total: ${viewState.total}")
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-        }
-
+        ModalTotal(viewState, viewModel)
     }
 }
 
@@ -193,7 +170,7 @@ private fun CoinContent(viewState: CapturedPhotoViewState, viewModel: CapturedPh
     val shape = RoundedCornerShape(4.dp)
     val coinList = viewState.currencyValues?.coinValues
     coinList?.let {
-        //UPLIFT: make box scrollable?/set height?
+        //!!!UPLIFT: make box scrollable?/set height?
         Box(
             modifier = Modifier
                 .clip(shape)
@@ -201,23 +178,29 @@ private fun CoinContent(viewState: CapturedPhotoViewState, viewModel: CapturedPh
             contentAlignment = Alignment.Center
         ) {
             Column(
+//                modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(
-                    text = "COINS",
-                    modifier = Modifier.padding(dimensionResource(R.dimen.padding_min)),
-                    style = MaterialTheme.typography.body2,
-                    color = colorResource(R.color.pink_3) //replace with theme
-                )
+                Row(){
+                    CloseModalIcon(viewModel, viewState.displayCoinInput)
+                    Text(
+                        text = "COINS",
+                        modifier = Modifier.padding(dimensionResource(R.dimen.padding_min)),
+                        style = MaterialTheme.typography.body2,
+                        color = colorResource(R.color.pink_3) //replace with theme
+                    )
+                }
                 viewModel.setList(coinList)
                 coinList.forEachIndexed { index, item ->
                     Row(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
                     ) {
                         CoinImage()
                         OutlinedTextField(
+//                            modifier = Modifier.weight(2f),
                             value = viewState.valueStateList[index],
                             onValueChange = {
                                 viewModel.onTextChange(it,index, item)
@@ -239,6 +222,27 @@ private fun CoinContent(viewState: CapturedPhotoViewState, viewModel: CapturedPh
             }
         }
     }
+}
+
+@Composable
+private fun ModalTotal(viewState: CapturedPhotoViewState, viewModel: CapturedPhotoViewModel){
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        //Close icon
+        CloseModalIcon(viewModel, viewState.displayX)
+        Text(text = "Total: ${viewState.total}")
+        Spacer(modifier = Modifier.width(8.dp))
+    }
+}
+
+@Composable
+private fun CloseModalIcon(viewModel: CapturedPhotoViewModel, modalToClose: MutableState<Boolean>){
+    Icon(
+        imageVector = ImageVector.vectorResource(R.drawable.ic_baseline_close_24) ,
+        contentDescription = "Close modal",
+        tint = colorResource(R.color.pink_3), //!!!UPLIFT: theme
+        modifier = Modifier
+            .clickable { viewModel.toggleBoolean(modalToClose) }
+    )
 }
 
 @Composable

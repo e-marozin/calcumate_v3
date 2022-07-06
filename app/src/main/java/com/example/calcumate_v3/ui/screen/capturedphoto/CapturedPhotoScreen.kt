@@ -149,14 +149,14 @@ private fun Toast(viewState: CapturedPhotoViewState, viewModel: CapturedPhotoVie
         if(viewState.displayCoinInput.value){
             CoinContent(viewState, viewModel)
         }else{
-            XContent(viewState, viewModel)
+            TotalContent(viewState, viewModel)
         }
 
     }
 }
 
 @Composable
-private fun XContent(viewState: CapturedPhotoViewState, viewModel: CapturedPhotoViewModel) {
+private fun TotalContent(viewState: CapturedPhotoViewState, viewModel: CapturedPhotoViewModel) {
     val shape = RoundedCornerShape(4.dp)
     Box(
         modifier = Modifier
@@ -262,7 +262,7 @@ private fun ModalTotal(viewState: CapturedPhotoViewState, viewModel: CapturedPho
     Row(verticalAlignment = Alignment.CenterVertically) {
         //Close icon
         Text(text = "Total: ${viewState.total}")
-        CloseModalIcon(viewModel, viewState.displayX)
+        CloseModalIcon(viewModel, viewState.displayX) //!!!BUG: pressing tick check twice on same image the total is accumulated, need to clear it out and start again
         Spacer(modifier = Modifier.width(8.dp))
     }
 }

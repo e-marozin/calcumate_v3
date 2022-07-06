@@ -8,21 +8,26 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -144,14 +149,14 @@ private fun Toast(viewState: CapturedPhotoViewState, viewModel: CapturedPhotoVie
         if(viewState.displayCoinInput.value){
             CoinContent(viewState, viewModel)
         }else{
-            XContent(viewState, viewModel)
+            TotalContent(viewState, viewModel)
         }
 
     }
 }
 
 @Composable
-private fun XContent(viewState: CapturedPhotoViewState, viewModel: CapturedPhotoViewModel) {
+private fun TotalContent(viewState: CapturedPhotoViewState, viewModel: CapturedPhotoViewModel) {
     val shape = RoundedCornerShape(4.dp)
     Box(
         modifier = Modifier
@@ -165,8 +170,10 @@ private fun XContent(viewState: CapturedPhotoViewState, viewModel: CapturedPhoto
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun CoinContent(viewState: CapturedPhotoViewState, viewModel: CapturedPhotoViewModel){
+    val keyboardController = LocalSoftwareKeyboardController.current
     val shape = RoundedCornerShape(4.dp)
     val coinList = viewState.currencyValues?.coinValues
     coinList?.let {
@@ -178,12 +185,18 @@ private fun CoinContent(viewState: CapturedPhotoViewState, viewModel: CapturedPh
             contentAlignment = Alignment.Center
         ) {
             Column(
-//                modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(8.dp)
             ) {
-                Row(){
+                //Close
+                Row(modifier = Modifier.widthIn(200.dp),
+                    horizontalArrangement = Arrangement.End){
                     CloseModalIcon(viewModel, viewState.displayCoinInput)
+                }
+
+                //Title
+                Row(){
                     Text(
                         text = "COINS",
                         modifier = Modifier.padding(dimensionResource(R.dimen.padding_min)),
@@ -191,6 +204,8 @@ private fun CoinContent(viewState: CapturedPhotoViewState, viewModel: CapturedPh
                         color = colorResource(R.color.pink_3) //replace with theme
                     )
                 }
+
+                //Coin input
                 viewModel.setList(coinList)
                 coinList.forEachIndexed { index, item ->
                     Row(
@@ -198,26 +213,44 @@ private fun CoinContent(viewState: CapturedPhotoViewState, viewModel: CapturedPh
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.weight(1f)
                     ) {
-                        CoinImage()
+
+                        GlideImage(
+                            imageModel = R.drawable.coin_64px,
+//                            contentScale = ContentScale.FillBounds,
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .size(48.dp)
+                        )
+
                         OutlinedTextField(
-//                            modifier = Modifier.weight(2f),
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .width(100.dp),
                             value = viewState.valueStateList[index],
                             onValueChange = {
                                 viewModel.onTextChange(it,index, item)
-                            }
+                            },
+                            placeholder = { Text("$item") },
+                            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+                            keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() })
                         )
                     }
                 }
-                Button(onClick = {viewModel.onEnter()},
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = colorResource(R.color.white), //theme???
-                        contentColor = colorResource(R.color.pink_3)
-                    )) {
-                    Text(
-                        text = "Enter",
-                        style = MaterialTheme.typography.body2,
-                        textAlign = TextAlign.Center
-                    )
+                //Enter
+                Row(){
+                    Button(
+                        modifier = Modifier.padding(8.dp),
+                        onClick = {viewModel.onEnter()},
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = colorResource(R.color.white), //theme???
+                            contentColor = colorResource(R.color.pink_3)
+                        )) {
+                        Text(
+                            text = "Enter",
+                            style = MaterialTheme.typography.body2,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         }
@@ -228,8 +261,8 @@ private fun CoinContent(viewState: CapturedPhotoViewState, viewModel: CapturedPh
 private fun ModalTotal(viewState: CapturedPhotoViewState, viewModel: CapturedPhotoViewModel){
     Row(verticalAlignment = Alignment.CenterVertically) {
         //Close icon
-        CloseModalIcon(viewModel, viewState.displayX)
         Text(text = "Total: ${viewState.total}")
+        CloseModalIcon(viewModel, viewState.displayX) //!!!BUG: pressing tick check twice on same image the total is accumulated, need to clear it out and start again
         Spacer(modifier = Modifier.width(8.dp))
     }
 }
@@ -243,21 +276,6 @@ private fun CloseModalIcon(viewModel: CapturedPhotoViewModel, modalToClose: Muta
         modifier = Modifier
             .clickable { viewModel.toggleBoolean(modalToClose) }
     )
-}
-
-@Composable
-private fun CoinImage(){
-    Box(
-        modifier = Modifier
-            .height(32.dp)
-            .width(32.dp),
-        contentAlignment = Alignment.Center
-    ) { //UPLIFT: DYNAMIC SIZING H/W
-        GlideImage(
-            imageModel = R.drawable.coin_32px,
-            contentScale = ContentScale.Fit,
-        )
-    }
 }
 
 @Composable

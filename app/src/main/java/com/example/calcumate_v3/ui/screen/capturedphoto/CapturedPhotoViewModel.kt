@@ -55,8 +55,8 @@ class CapturedPhotoViewModel : ViewModel(){
 
         //If there are no coins, just show final screen
         if(!_viewState.value.displayCoinInput.value){
-//            _viewState.value = _viewState.value.copy(displayX = mutableStateOf(true))
-            toggleBoolean(_viewState.value.displayX)
+            _viewState.value = _viewState.value.copy(displayX = mutableStateOf(true))
+//            toggleBoolean(_viewState.value.displayX)
         }
     }
 
@@ -182,7 +182,7 @@ class CapturedPhotoViewModel : ViewModel(){
     //!!!UPLIFT: validate input, handle: removal of items from map if user updates
     fun onTextChange(text: String, index: Int, coinValue: Double){
         _viewState.value.valueStateList[index] = text
-        if(isNumeric(text)) {
+        if(isNumeric(text) && text.isNotBlank()) {
             _viewState.value.mapTest[text.toInt()] = coinValue
         }else{
             Log.d("!!!CoinInpt", "NOT NUMERIC, ERROR")
@@ -191,23 +191,21 @@ class CapturedPhotoViewModel : ViewModel(){
 
     fun onEnter(){
         if(viewState.value.mapTest.isNotEmpty()){
-            var currentTotal: Double = 0.00
+            var currentTotal = 0.00
             _viewState.value.mapTest.forEach { item ->
-                Log.d("!!item", "$item")
-                currentTotal += (item.key * item.value)
-                Log.d("!!currentTotal", "$currentTotal")
+                if(isNumeric(item.key.toString())){
+                    currentTotal += (item.key * item.value)
+                }
             }
-            _viewState.value = _viewState.value.copy(total = _viewState.value.total?.plus(currentTotal), displayCoinInput = mutableStateOf(false)) //displayx = true
-            toggleBoolean(_viewState.value.displayX)
-            Log.d("!!displayX", "${_viewState.value.displayX}")
-            Log.d("!!total", "${_viewState.value.total}")
+            _viewState.value = _viewState.value.copy(total = _viewState.value.total?.plus(currentTotal), displayCoinInput = mutableStateOf(false), displayX = mutableStateOf(true))
         }else{
-            Log.d("!!!CoinInput", "NO ENTRIES, ERROR")
+            Log.d("!!!CoinInput", "NO/NON-NUMBER ENTRIES, ERROR")
         }
     }
 
-    //!!!UPLIFT: Move to app utils? re-init in HomeScreenViewModel
+//    //!!!UPLIFT: Move to app utils? re-init in HomeScreenViewModel
     fun toggleBoolean(bool: MutableState<Boolean>){
         bool.value = !bool.value
+//        _viewState.value = _viewState.value.copy()
     }
 }
